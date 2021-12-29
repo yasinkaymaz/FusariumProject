@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 
-source /usr/local/bin/PAGIT/sourceme.pagit
+bash /usr/local/bin/PAGIT/sourceme.pagit
 
 WORKINGDIR="~/Documents/fusarium/Megahit_assembly_trimmed/temp/"
 contigsFasta=megahit_12_trimmed.fa
@@ -10,7 +10,7 @@ SAMPLE_NAME="Fox-12"
 
 cd $WORKINGDIR/
 
-#ABACAS 
+#ABACAS
 mkdir runABACAS_First
 cd runABACAS_First
 ln -s $WORKINGDIR/$contigsFasta ./
@@ -18,7 +18,7 @@ ln -s $REFDIR/GCF_000149955.1_ASM14995v2_genomic.fna ./
 
 perl joinMultifasta.pl GCF_000149955.1_ASM14995v2_genomic.fna GCF_000149955.1_ASM14995v2_genomic_chrJoined.fa
 
-perl abacas.pl \
+abacas.pl \
 -r GCF_000149955.1_ASM14995v2_genomic_chrJoined.fa \
 -q $contigsFasta \
 -p nucmer -b -t \
@@ -42,7 +42,7 @@ ln -s Raw_read_pairs_2.fastq ./
 
 ln -s $WORKINGDIR/runABACAS_First/"$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta ./
 
-perl image.pl \
+image.pl \
 -scaffolds "$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta \
 -prefix Raw_read_pairs \
 -iteration 1 \
@@ -58,7 +58,7 @@ ln -s $REFDIR/GCF_000149955.1_ASM14995v2_genomic.fna ./
 
 contigsFasta=new.fa
 
-perl abacas.pl \
+abacas.pl \
 -r GCF_000149955.1_ASM14995v2_genomic.fna \
 -q $contigsFasta \
 -p nucmer -b -t \
@@ -72,7 +72,7 @@ ln -s Raw_read_pairs_2.fastq ./
 ln -s $WORKINGDIR/runABACAS_Second/"$SAMPLE_NAME"_abacas.fasta ./
 
 scaffoldsFasta="$SAMPLE_NAME"_abacas.fasta
-perl image.pl \
+image.pl \
 -scaffolds $scaffoldsFasta \
 -prefix Raw_read_pairs \
 -iteration 1 -all_iteration 2 -dir_prefix ite -kmer 147 -vel_ins_len 400
