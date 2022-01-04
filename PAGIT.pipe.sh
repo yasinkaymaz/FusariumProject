@@ -1,80 +1,100 @@
 #!/usr/bin/bash
+#SOURCE PAGIT
+source ~/Documents/PAGIT/sourceme.pagit
 
-
-bash /usr/local/bin/PAGIT/sourceme.pagit
-
-WORKINGDIR="~/Documents/fusarium/Megahit_assembly_trimmed/temp/"
-contigsFasta=megahit_12_trimmed.fa
-REFDIR="~/Documents/fusarium/RefIdxFiles/"
+#FILE AND FOLDER VARIABLES
+WORKINGDIR=~/Documents/TEST
+fastq=~/Documents/TEST/12_read
+contigs=~/Documents/TEST/12_megahit_contig.fa
+refFasta=GCF_000149955.1_ASM14995v2_genomic.fna
+refLoc=$WORKINGDIR/$refFasta
 SAMPLE_NAME="Fox-12"
+fastq1=$fastq"1.fq"
+fastq2=$fastq"2.fq"
 
-cd $WORKINGDIR/
+#ABACAS CONFIG
+echo "Configuring ABACAS_First"
+mkdir ${WORKINGDIR}/runABACAS_First
+cd ${WORKINGDIR}/runABACAS_First
+ln -s ../$contigs
+ln -s ../$refFasta
 
-#ABACAS
-mkdir runABACAS_First
-cd runABACAS_First
-ln -s $WORKINGDIR/$contigsFasta ./
-ln -s $REFDIR/GCF_000149955.1_ASM14995v2_genomic.fna ./
+#JOIN FOR ABACAS
+echo "running joinMultifasta.pl"
+perl $PAGIT_HOME/ABACAS/joinMultifasta.pl $refLoc ${refFasta}_chrJoined.fa
+chrJoined=${WORKINGDIR}/runABACAS_First/${refFasta}_chrJoined.fa
 
-perl joinMultifasta.pl GCF_000149955.1_ASM14995v2_genomic.fna GCF_000149955.1_ASM14995v2_genomic_chrJoined.fa
-
-abacas.pl \
--r GCF_000149955.1_ASM14995v2_genomic_chrJoined.fa \
--q $contigsFasta \
--p nucmer -b -t \
+#FIRST ABACAS RUN
+echo "running abacas.pl"
+perl $PAGIT_HOME/ABACAS/abacas.pl \
+-r $chrJoined \
+-q $contigs \
+-p nucmer \
 -o "$SAMPLE_NAME"_abacas
 
-perl splitABACASunion.pl GCF_000149955.1_ASM14995v2_genomic.fna \
-GCF_000149955.1_ASM14995v2_genomic_chrJoined.fa \
+#SPLIT ABACAS
+echo "running splitABACASunion.pl"
+perl $PAGIT_HOME/ABACAS/splitABACASunion.pl $refFasta $chrJoined \
 "$SAMPLE_NAME"_abacas.fasta \
 "$SAMPLE_NAME"_abacas.crunch \
 "$SAMPLE_NAME"_abacas.tab
 
+#CONCAT SEQUENCES
+echo "running cat"
+cat Split.ABACAS.fasta "$SAMPLE_NAME"_abacas.bin > "$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta
 
-cat Split.ABACAS.fasta "$SAMPLE_NAME"_abacas.contigsInbin.fas > "$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta
+#IMAGE CONFIG
+echo "Configuring IMAGE"
+mkdir ${WORKINGDIR}/runIMAGE_First
+cd ${WORKINGDIR}/runIMAGE_First
+cp -s ../*.fq .
+ln -s -f ${WORKINGDIR}/runABACAS_First/"$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta
+echo "*************************************"
 
-#IMAGE
-mkdir $WORKINGDIR/runIMAGE_First
-cd $WORKINGDIR/runIMAGE_First
-
-ln -s Raw_read_pairs_1.fastq ./
-ln -s Raw_read_pairs_2.fastq ./
-
-ln -s $WORKINGDIR/runABACAS_First/"$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta ./
-
-image.pl \
+#FIRST IMAGE RUN
+echo "running IMAGE"
+$PAGIT_HOME/IMAGE/image.pl \
 -scaffolds "$SAMPLE_NAME"_abacas_mappedAndUnmaped.fasta \
--prefix Raw_read_pairs \
+-prefix $fastq \
 -iteration 1 \
 -all_iteration 10 \
 -dir_prefix ite \
 -kmer 147 \
 -vel_ins_len 400
 
-#Second ABACAS
-mkdir $WORKINGDIR/runABACAS_Second && cd $WORKINGDIR/runABACAS_Second
-ln -s $WORKINGDIR/runIMAGE_First/ite10/new.fa ./
-ln -s $REFDIR/GCF_000149955.1_ASM14995v2_genomic.fna ./
+#SECOND RUN ABACAS CONFIG
+echo "Configuring ABACAS_Second"
+mkdir ${WORKINGDIR}/runABACAS_Second
+cd ${WORKINGDIR}/runABACAS_Second
+ln -s -f ${WORKINGDIR}/runIMAGE_First/ite10/new.fa
+#SET NEW CONTIG
+contigs=new.fa
 
-contigsFasta=new.fa
-
-abacas.pl \
--r GCF_000149955.1_ASM14995v2_genomic.fna \
--q $contigsFasta \
--p nucmer -b -t \
+#SECOND ABACAS RUN
+echo "running SECOND abacas.pl"
+perl $PAGIT_HOME/ABACAS/abacas.pl \
+-r $chrJoined \
+-q $contigs \
+-p nucmer \
 -o "$SAMPLE_NAME"_abacas
 
-mkdir $WORKINGDIR/runIMAGE_last && cd $WORKINGDIR/runIMAGE_last
+#SECOND IMAGE CONFIG
+echo "Configuring SECOND IMAGE"
+mkdir ${WORKINGDIR}/runIMAGE_Second
+cd ${WORKINGDIR}/runIMAGE_Second
+cp -s ../*.fq .
+ln -s -f ${WORKINGDIR}/runABACAS_Second/"$SAMPLE_NAME"_abacas.fasta
+echo "*************************************"
 
-ln -s Raw_read_pairs_1.fastq ./
-ln -s Raw_read_pairs_2.fastq ./
+#SECOND IMAGE RUN
+echo "running SECOND IMAGE"
+$PAGIT_HOME/IMAGE/image.pl \
+-scaffolds "$SAMPLE_NAME"_abacas.fasta \
+-prefix $fastq \
+-iteration 1 \
+-all_iteration 2 \
+-dir_prefix ite \
+-kmer 147 \
+-vel_ins_len 400
 
-ln -s $WORKINGDIR/runABACAS_Second/"$SAMPLE_NAME"_abacas.fasta ./
-
-scaffoldsFasta="$SAMPLE_NAME"_abacas.fasta
-image.pl \
--scaffolds $scaffoldsFasta \
--prefix Raw_read_pairs \
--iteration 1 -all_iteration 2 -dir_prefix ite -kmer 147 -vel_ins_len 400
-
-cd $WORKINGDIR/
+cd $WORKINGDIR
