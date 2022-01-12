@@ -1,15 +1,16 @@
 
 #conda activate DAB
+InFasta=$1
+InAGP=$2
+python ~/Dropbox/codes/CGTools/fasta_to_tab.py $InFasta
 
-python ~/Dropbox/codes/CGTools/fasta_to_tab.py ragtag.scaffold.fasta
 
-
-rm fasta.tmp
+rm "${InFasta}".rc.fixed.fasta
 
 while read line
 do
     chr=$(echo $line|awk '{print $1}')
-    grep -v "#" ragtag.scaffold.agp|grep -w $chr > ragtag.scaffold.agp.tmp
+    grep -v "#" "${InAGP}"|grep -v Chr0_ |grep -w $chr > "${InAGP}".tmp
 
     chr_scaffold=$(echo $line|awk '{print $2}')
     newseq=''
@@ -17,7 +18,6 @@ do
     do
         str=$(echo $coord| awk '{print $2}')
         end=$(echo $coord| awk '{print $3}')
-
         stu=$(echo $coord| awk '{print $5}')
         strnd=$(echo $coord| awk '{print $9}')
 
@@ -36,8 +36,8 @@ do
             fixedseq=$(printf "%0.sN" {1..100})
         fi
         newseq=$newseq$fixedseq
-    done < ragtag.scaffold.agp.tmp
+    done < "${InAGP}".tmp
 
-    echo ">$chr\n$newseq" >> fasta.tmp
+    echo ">$chr\n$newseq" >> "${InFasta}".rc.fixed.fasta
 
-done < ragtag.scaffold.fasta.tab
+done < "${InFasta}".tab
