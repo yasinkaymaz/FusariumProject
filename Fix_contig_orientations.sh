@@ -12,13 +12,12 @@ do
     grep -v "#" ragtag.scaffold.agp|grep -w $chr > ragtag.scaffold.agp.tmp
 
     chr_scaffold=$(echo $line|awk '{print $2}')
-
+    newseq=''
     while read coord
     do
         str=$(echo $coord| awk '{print $2}')
         end=$(echo $coord| awk '{print $3}')
         seq=$(echo $chr_scaffold| cut -b $str-$end)
-        echo "$chr\t$str\t$end"
         stu=$(echo $coord| awk '{print $5}')
         strnd=$(echo $coord| awk '{print $9}')
 
@@ -28,6 +27,7 @@ do
             then
                 #"taking a reverse complement"
                 fixedseq=`echo $seq|rev | tr "ATGCNatgcn" "TACGNTACGN"`;
+                echo "$chr\t$str\t$end\t$strnd"
             else
                 fixedseq=$seq
             fi
