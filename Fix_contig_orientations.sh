@@ -17,12 +17,13 @@ do
     do
         str=$(echo $coord| awk '{print $2}')
         end=$(echo $coord| awk '{print $3}')
-        seq=$(echo $chr_scaffold| cut -b $str-$end)
+
         stu=$(echo $coord| awk '{print $5}')
         strnd=$(echo $coord| awk '{print $9}')
 
         if [ "$stu" = "W" ]
         then
+            seq=$(echo $chr_scaffold| cut -b $str-$end)
             if [ "$strnd" = "-" ]
             then
                 #"taking a reverse complement"
