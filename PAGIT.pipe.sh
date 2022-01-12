@@ -2,6 +2,7 @@
 
 
 bash /usr/local/bin/PAGIT/sourceme.pagit
+#cd /usr/local/bin/ && ln -s /usr/bin/perl ./
 
 WORKINGDIR="~/Documents/fusarium/Megahit_assembly_trimmed/temp/"
 contigsFasta=megahit_12_trimmed.fa
